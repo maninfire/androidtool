@@ -1,0 +1,63 @@
+一开始我使用apktool,能反编译和打包，使用的是apktool2.3.
+还下了个脚本如下apktool.bat
+反编译：apktool d xxxx.apk  重编译：apktool b xxxx(文件路径)  用了集成的工具签名
+然后没装上，还以为apktool有问题。
+
+
+然后下了  baksmali.jar   和 smali.jar  都是2.2.2的。
+写了bak.bat
+和smali.bat
+
+
+中间还有点小插曲，但是最后这个脚本是调试好的。
+签名还是装不了。
+
+感觉应该是签名的问题
+用jar的签名文件
+jarsigner -verbose -keystore leslie.keystore -storepass 123456 -keypass 123456 -signedjar  appshownew-signed.apk  appshownew.apk lesliekeystore
+提示找不到keystore
+然后又用android.keystore 的签名文件（因为这个文件在 .android文件夹下）
+jarsigner -digestalg SHA1 -sigalg MD5withRSA -keystore debug.keystore -storepass android -keypass android -signedjar appshownew-signed.apk  appshownew.apk androiddebugkey
+显示生成的签名有个时间限制，过了这个限制就不能用了，自己以为没啥大问题，装了，还是不能用
+后来还试了加了个网址添加时间验证戳，可惜显示防火墙后需要设置代理，设置个毛线，咋设？
+
+应该是这个证书有问题，自己生成了一个
+//生成证书
+keytool -genkey -alias demo.keystore -keyalg RSA -validity 40000 -keystore demo.keystore
+这句命令后有很多信息要填，随便添了，密码要记住。
+然后签名
+//签名
+jarsigner -verbose -keystore demo.keystore appshownew.apk demo.keystore
+
+appshownew.apk是要签名的文件，这个命令直接把源文件改成签名的文件了，也行吧。
+执行成功，安装到手机，Ok执行了。
+
+写了脚本resign.bat
+@echo off
+if "%PATH_BASE%" == "" set PATH_BASE=%PATH%
+set PATH=%CD%;%PATH_BASE%;
+jarsigner -verbose -keystore demo.keystore %* demo.keystore
+密码123456
+
+又造了个java to smali的脚本，用来帮助不知到怎么写smali代码的人，
+jartosmali.bat
+
+@echo off
+if "%PATH_BASE%" == "" set PATH_BASE=%PATH%
+set PATH=�%;%PATH_BASE%;
+echo "start"
+pause
+javac codeconv.java
+echo "make .class success"
+java -jar "%~dp0\dx.jar" --dex --output=smaliCode.dex codeconv.class
+echo "make dex success"
+java -jar "%~dp0\baksmali.jar" disassemble smaliCode.dex
+ehco "make smali success"
+md codeconvsmaliout
+echo "make file"
+copy out\codeconv.smali codeconvsmaliout\codeconv.smali
+echo "build success"
+rd /q /s out
+echo "dele out"
+
+生成在out文件夹里有，dx.jar是android sdk里的build-tool里工具，复制到脚本目录即可。
