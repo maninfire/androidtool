@@ -203,7 +203,34 @@ def deal_message(payload):
 		print "%x"%payload['con']
 '''如下代码为hook微信（测试版本为6.3.13,不同版本由于混淆名字的随机生成的原因或者代码改动导致名称不一样）com.tencent.mm.sdk.platformtools.ay类的随机数生成函数，让微信猜拳随机（tye=2）,二摇色子总是为6点（type=5）'''
 
+def java_hook(name):
+    rdev = frida.get_remote_device()
+    session = rdev.attach(name)
+    scr="""
+    var utils=Java.use("cn.wjdainkong.fridaandroid.Utils");
+    var coinClass = Java.use("cn.wjdainkong.fridaandroid.CoinMoney");
+    var clazz = Java.use('java.lang.Class');
+    var Exception = Java.use("java.lang.Exception");
 
+    //hook constructor method
+    coinClass.$init.overload("init","java.lang.String").implement = function(money,value){
+        send("money:"+money+",value:"+value);
+        arguments[0] = 12;
+        arguments[0] = "12.0";
+        return this.$init(12,"12.0");
+    };
+
+    utils.getPwd.overload("java.lang.String") implementation = function(){
+        var arg = arguments[0];
+        send("pwd arg:"+arg);
+
+        return this.getPwd("jiangwei212"+"yyyy");
+    };
+
+
+    """
+    script = session.create_script(scr)
+    script.on("mess
 
 '''枚举手机进程'''
 def enume_proc():
@@ -237,7 +264,16 @@ def main():
                 time.sleep(2)
             	print "find process"
             	native_hook(name)
-
+    elif sys.argv[1]=='hook':
+        print "please app waiting launched.."
+        while True:
+            if find_proc(name)==False:
+                continue
+            else:
+                time.sleep(2)
+            	print "find process"
+            	java_hook(name)
+	      
 if __name__ == "__main__":
     try:
         main()
