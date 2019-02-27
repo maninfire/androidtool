@@ -61,3 +61,20 @@ rd /q /s out
 echo "dele out"
 
 生成在out文件夹里有，dx.jar是android sdk里的build-tool里工具，复制到脚本目录即可。
+
+frida使用：
+
+adb push /data/local/tmp frida-server
+
+root# chmod 777 /data/local/tmp/frida-server
+
+然后直接运行这个程序：
+
+/data/local/tmp# ./frida-server
+
+
+然后把端口转发到PC端：
+
+adb forward tcp:27042 tcp:27042
+
+adb forward tcp:27043 tcp:27043
